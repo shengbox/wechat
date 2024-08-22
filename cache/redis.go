@@ -16,6 +16,7 @@ type Redis struct {
 // RedisOpts redis 连接属性
 type RedisOpts struct {
 	Host        string `yml:"host" json:"host"`
+	Username    string `yaml:"username" json:"username"`
 	Password    string `yml:"password" json:"password"`
 	Database    int    `yml:"database" json:"database"`
 	MaxIdle     int    `yml:"max_idle" json:"max_idle"`
@@ -28,6 +29,7 @@ func NewRedis(ctx context.Context, opts *RedisOpts) *Redis {
 	conn := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs:        []string{opts.Host},
 		DB:           opts.Database,
+		Username:     opts.Username,
 		Password:     opts.Password,
 		IdleTimeout:  time.Second * time.Duration(opts.IdleTimeout),
 		MinIdleConns: opts.MaxIdle,
