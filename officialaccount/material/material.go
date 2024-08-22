@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/silenceper/wechat/v2/officialaccount/context"
 	"github.com/silenceper/wechat/v2/util"
@@ -163,7 +164,7 @@ type resAddMaterial struct {
 }
 
 // AddMaterialFromReader 上传永久性素材（处理视频需要单独上传），从 io.Reader 中读取
-func (material *Material) AddMaterialFromReader(mediaType MediaType, filename string, reader io.Reader) (mediaID string, url string, err error) {
+func (material *Material) AddMaterialFromReader(mediaType MediaType, filePath string, reader io.Reader) (mediaID string, url string, err error) {
 	if mediaType == MediaTypeVideo {
 		err = errors.New("永久视频素材上传使用 AddVideo 方法")
 		return
@@ -175,8 +176,10 @@ func (material *Material) AddMaterialFromReader(mediaType MediaType, filename st
 	}
 
 	uri := fmt.Sprintf("%s?access_token=%s&type=%s", addMaterialURL, accessToken, mediaType)
+	// 获取文件名
+	filename := path.Base(filePath)
 	var response []byte
-	response, err = util.PostFileFromReader("media", filename, uri, reader)
+	response, err = util.PostFileFromReader("media", filePath, filename, uri, reader)
 	if err != nil {
 		return
 	}
@@ -211,7 +214,7 @@ type reqVideo struct {
 }
 
 // AddVideoFromReader 永久视频素材文件上传，从 io.Reader 中读取
-func (material *Material) AddVideoFromReader(filename, title, introduction string, reader io.Reader) (mediaID string, url string, err error) {
+func (material *Material) AddVideoFromReader(filePath, title, introduction string, reader io.Reader) (mediaID string, url string, err error) {
 	var accessToken string
 	accessToken, err = material.GetAccessToken()
 	if err != nil {
@@ -229,17 +232,19 @@ func (material *Material) AddVideoFromReader(filename, title, introduction strin
 	if err != nil {
 		return
 	}
-
+	fileName := path.Base(filePath)
 	fields := []util.MultipartFormField{
 		{
 			IsFile:     true,
 			Fieldname:  "media",
-			Filename:   filename,
+			FilePath:   filePath,
+			Filename:   fileName,
 			FileReader: reader,
 		},
 		{
 			IsFile:    false,
 			Fieldname: "description",
+			Filename:  fileName,
 			Value:     fieldValue,
 		},
 	}
@@ -265,14 +270,14 @@ func (material *Material) AddVideoFromReader(filename, title, introduction strin
 }
 
 // AddVideo 永久视频素材文件上传
-func (material *Material) AddVideo(filename, title, introduction string) (mediaID string, url string, err error) {
-	f, err := os.Open(filename)
+func (material *Material) AddVideo(directory, title, introduction string) (mediaID string, url string, err error) {
+	f, err := os.Open(directory)
 	if err != nil {
 		return "", "", err
 	}
 	defer func() { _ = f.Close() }()
 
-	return material.AddVideoFromReader(filename, title, introduction, f)
+	return material.AddVideoFromReader(directory, title, introduction, f)
 }
 
 type reqDeleteMaterial struct {
