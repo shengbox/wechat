@@ -27,6 +27,7 @@ type EventCallbackMessage struct {
 	State          string `json:"state"`
 	WelcomeCode    string `json:"welcome_code"`
 	Content        string `json:"content"`
+	EventKey       string `json:"eventKey"`
 }
 
 // GetCallbackMessage 获取联系客户回调事件中的消息内容
